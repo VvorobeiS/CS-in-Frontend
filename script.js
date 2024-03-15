@@ -1,4 +1,4 @@
-const fizzbuzz = () => {
+const fizzBuzz = () => {
   let i = 1n;
 
   let next = () => {
@@ -20,7 +20,7 @@ const fizzbuzz = () => {
   return { next };
 };
 
-const myFizzBuzz = fizzbuzz();
+const myFizzBuzz = fizzBuzz();
 
 for (let i = 0n; i < 50n; i++) {
   console.log(myFizzBuzz.next());
