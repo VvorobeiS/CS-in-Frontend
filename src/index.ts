@@ -1,45 +1,118 @@
+import { calcNumberLength } from './helpers';
+
+function binary(num: number) {
+  return console.log(num.toString(2).padStart(64, '0'));
+}
+
+// function flipInt(n: number) {
+//   var digit,
+//     result = 0;
+
+//   while (n) {
+//     digit = n % 10; //  Get right-most digit. Ex. 123/10 → 12.3 → 3
+//     result = result * 10 + digit; //  Ex. 123 → 1230 + 4 → 1234
+//     n = (n / 10) | 0; //  Remove right-most digit. Ex. 123 → 12.3 → 12
+//   }
+
+//   return result;
+// }
+
+// console.log(flipInt(543));
+
 class BCD {
   private numbers: number[] = [];
+  private lengthFullNam: number = 0;
+  private lengthLastNum: number = 0;
+  private isNegative: boolean = false;
 
   constructor(num: number) {
-    let arr = Array.from(num.toString());
-    let charNumber = 1;
+    this.isNegative = Math.sign(num) == -1;
+    this.lengthFullNam = calcNumberLength(num) + 1; // оставляем место для знака
 
-    arr.reduce((acc, value, i) => {
-      let end = charNumber % 7 == 0;
+    let bigIntNum = BigInt(Math.abs(num));
+    let acc = this.lengthFullNam;
+    let res = 0n;
+    let i = 0n;
 
-      console.log(end);
-      // console.log(acc, this.binary(value << (charNumber * 4)));
+    while (acc > 0) {
+      let digit = bigIntNum % 10n;
 
-      let result = this.binary(acc | this.binary(value << (charNumber * 4)));
-
-      if (!end) {
-        charNumber++;
-      } else if (end) {
-        console.log(i);
-        charNumber = 1;
-        this.numbers.push(result);
+      if (this.isNegative && acc == 1) {
+        res |= 1n << 24n;
+      } else {
+        bigIntNum = bigIntNum / 10n;
+        res |= digit << (i * 4n);
       }
 
-      return result;
-    }, this.binary(0));
+      if (acc % 7 == 1) {
+        if (!this.numbers.length) {
+          this.lengthLastNum = Number(i + 1n);
+        }
 
-    // console.log(this.numbers);
+        this.numbers.push(Number(res));
+        res = 0n;
+        i = 0n;
+      } else {
+        i++;
+      }
+
+      acc--;
+    }
+
+    this.numbers.reverse();
   }
 
-  get(idx: number) {}
+  getDigit(idx: number): number {
+    if (idx < 0) {
+      idx = this.lengthFullNam + idx;
+    } else {
+      idx += 1;
+    }
 
-  private binary(num: number) {
-    return num.toString(2).padStart(28, '0');
+    let idxNumber = Math.floor(idx / 7);
+    let number = this.numbers[idxNumber];
+    let digitIdx = 6 - (idx % 7); // индекс полубайта
+    let digitPosition = 28 - digitIdx * 4; // позиция полубайта
+    let digitShift = 28 - digitPosition; // сдвиг полубайта на 0-ю позицию
+
+    if (idxNumber == this.numbers.length - 1) {
+      number <<= 28 - this.lengthLastNum * 4;
+    }
+
+    return (number & ((~0 << 28) >>> digitPosition)) >>> digitShift;
+  }
+
+  valueOf(): BigInt {
+    if (this.numbers.length == 1) return BigInt(this.numbers[0]);
+
+    let result = 0n;
+    let shift = 0n;
+
+    for (let i = this.numbers.length - 1; i >= 0; i--) {
+      let num = this.numbers[i];
+
+      result |= BigInt(num) << shift;
+      shift = i == this.numbers.length - 1 ? BigInt(this.lengthLastNum * 4) : 28n;
+    }
+
+    return result;
+  }
+
+  get sign(): boolean {
+    return this.isNegative;
   }
 }
 
-const n = new BCD(65536);
+const n = new BCD(-123);
 
-// function binary(num: number) {
-//   return num.toString(2).padStart(28, '0');
-// }
-
-// let bin1 = binary(0);
-// let bin2 = binary(1);
-// console.log(binary(bin1 | bin2));
+/*
+n.get(0); // 1
+n.get(1); // 2
+n.get(2); // 3
+n.get(3); // 4
+n.get(4); // 5
+n.get(5); // 6
+n.get(6); // 7
+n.get(7); // 8
+n.get(8); // 9
+*/
