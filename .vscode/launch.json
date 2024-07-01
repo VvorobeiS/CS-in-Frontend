@@ -8,9 +8,10 @@
       "type": "node",
       "request": "launch",
       "name": "Запустить программу",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}\\dist\\index.js",
-      "outFiles": ["${workspaceFolder}/**/*.js"]
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${file}"
     }
   ]
 }
